@@ -21,20 +21,39 @@ while a = as.shift
 end
 
 
+def fjoin(fn); File.join(OPTS[:path], fn); end
+def dir(fn); Dir[fjoin(fn)]; end
+
+def basename(path)
+  bn = File.basename(path, File.extname(path))
+  m = bn.match(/\A(.+)_thumbnail\z/)
+  bn = m ? m[1] : bn
+end
+
+def to_thumb_fn(path); basename(path) + '_thumbnail.jpg'; end
+def to_html_fn(path); basename(path) + '.html'; end
+def to_photo_fn(path); basename(path) + '.jpg'; end
+
+def to_thumb_pa(path); fjoin(to_thumb_fn(path)); end
+def to_html_pa(path); fjoin(to_html_fn(path)); end
+def to_photo_pa(path); fjoin(to_photo_fn(path)); end
+
 def shoot
 
+  tsformat = '%Y-%m-%d %H:%M:%S (%Z)'
+
   t = Time.now.strftime('%Y%m%d_%H%M%S')
-  fn = File.join(OPTS[:path], "photo_#{t}.jpg")
-  tfn = File.join(OPTS[:path], "photo_#{t}_thumbnail.jpg")
-  system("fswebcam -d #{OPTS[:dev]} -r #{OPTS[:tres]} #{tfn} > /dev/null 2>&1")
-  system("fswebcam -d #{OPTS[:dev]} -r #{OPTS[:res]} #{fn} > /dev/null 2>&1")
+  pfn = fjoin("photo_#{t}.jpg")
+  tfn = fjoin("photo_#{t}_thumbnail.jpg")
+  system("fswebcam -d #{OPTS[:dev]} -r #{OPTS[:tres]} --timestamp #{tsformat.inspect} #{tfn} > /dev/null 2>&1")
+  system("fswebcam -d #{OPTS[:dev]} -r #{OPTS[:res]} --timestamp #{tsformat.inspect} #{pfn} > /dev/null 2>&1")
 end
 
 def clean
 
   t = Time.now
 
-  Dir[File.join(OPTS[:path], 'photo_*.jpg')]
+  dir('photo_*.jpg')
     .each { |pa|
       pt = pa.match(/\/photo_(\d+_\d+)(_thumbnail)?.jpg$/)
       pt = Time.parse(pt[1])
@@ -43,7 +62,7 @@ end
 
 def index
 
-  File.open(File.join(OPTS[:path], 'index.html'), 'wb') do |f|
+  File.open(fjoin('index.html'), 'wb') do |f|
     f.write(%{
 <!DOCTYPE html>
 <html>
@@ -56,11 +75,10 @@ def index
 </head>
 <body>
     }.strip)
-    Dir[File.join(OPTS[:path], 'photo_*_thumbnail.jpg')]
+    dir('photo_*_thumbnail.jpg')
       .sort.reverse[0, 100].each do |pa|
-        fn = File.basename(pa)
         f.write(%{
-<a href="#{fn.gsub(/_thumbnail\./, '.')}"><img class="photo" src="#{fn}" /></a>
+<a href="#{to_html_fn(pa)}"><img class="photo" src="#{to_thumb_fn(pa)}" /></a>
         }.rstrip)
       end
     f.write(%{
@@ -70,12 +88,60 @@ def index
   end
 end
 
+def map
+
+  thumbs =
+    dir('photo_*_thumbnail.jpg').sort.reverse
+  thumbs[0, 28]
+    .each_with_index do |t, i|
+      File.open(to_html_fn(t), 'wb') do |f|
+        pt = i > 0 ? thumbs[i - 1] : nil
+        nt = thumbs[i + 1]
+        prv =
+          pt ?
+          "<a href=\"#{to_html_fn(pt)}\"><img src=\"#{to_thumb_fn(pt)}\" /></a>" :
+          ''
+        nxt =
+          nt ?
+          "<a href=\"#{to_html_fn(nt)}\"><img src=\"#{to_thumb_fn(nt)}\" /></a>" :
+          ''
+        f.write(%{
+<!DOCTYPE html>
+<html>
+<head>
+<title>ura #{File.basename(basename(t))}</title>
+<link href="photo.css" rel="stylesheet" type="text/css" />
+<!--
+<script src="photo.js"></script>
+-->
+</head>
+<body>
+  <table>
+    <tr>
+      <td class="prev">#{prv}</td>
+      <td class="curr"><a href="#{to_photo_fn(t)}"><img src="#{to_photo_fn(t)}" /></a></td>
+      <td class="next">#{nxt}</td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <a href="/cam">index</a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        }.strip)
+      end
+  end
+end
+
 
 loop do
 
   shoot
   clean
   index
+  map
 
   sleep OPTS[:sleep]
 end

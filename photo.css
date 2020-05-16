@@ -1,0 +1,19 @@
+
+table {
+  width: 100%;
+}
+td.prev, td.next {
+  width: 20%;
+}
+td.curr {
+  width: 59%;
+}
+img {
+  width: 100%;
+}
+/*
+td.prev img, td.next img {
+  width: 50%
+}
+*/
+
