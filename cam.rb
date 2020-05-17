@@ -76,7 +76,7 @@ def index
 <body>
     }.strip)
     dir('photo_*_thumbnail.jpg')
-      .sort.reverse[0, 100].each do |pa|
+      .sort.reverse[0, 350].each do |pa|
         f.write(%{
 <a href="#{to_html_fn(pa)}"><img class="photo" src="#{to_thumb_fn(pa)}" /></a>
         }.rstrip)
