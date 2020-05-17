@@ -6,6 +6,7 @@ OPTS = {
   dev: '/dev/video0',
   res: '1280x720', tres: '320x240',
   path: '.', old: 2 * 24 * 3600,
+  depth: 4 * 3600,
   sleep: 5 }
 
 as = ARGV.dup
@@ -17,6 +18,7 @@ while a = as.shift
   when '-p', '--path' then OPTS[:path] = as.shift
   when '-o', '--old' then OPTS[:old] = as.shift.to_i
   when '-s', '--sleep' then OPTS[:sleep] = as.shift.to_i
+  when '-i', '--index-depth' then OPTS[:depth] = as.shift.to_i
   end
 end
 
@@ -76,11 +78,14 @@ def index
 <body>
     }.strip)
     dir('photo_*_thumbnail.jpg')
-      .sort.reverse[0, 350].each do |pa|
+      .sort.reverse
+      .take_while { |pa|
+        t = Time.parse(pa.match(/photo_(\d+_\d+)_thumbn/)[1])
+        (Time.now - t) < OPTS[:depth] }
+      .each { |pa|
         f.write(%{
 <a href="#{to_html_fn(pa)}"><img class="photo" src="#{to_thumb_fn(pa)}" /></a>
-        }.rstrip)
-      end
+        }.rstrip) }
     f.write(%{
 </body>
 </html>
