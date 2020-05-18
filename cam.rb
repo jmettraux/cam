@@ -64,7 +64,10 @@ end
 
 def index
 
-  File.open(fjoin('index.html'), 'wb') do |f|
+  index = fjoin('index.html')
+  index1 = fjoin('index1.html')
+
+  File.open(index1, 'wb') do |f|
     f.write(%{
 <!DOCTYPE html>
 <html>
@@ -91,6 +94,7 @@ def index
 </html>
     }.strip)
   end
+  system("mv #{index1} #{index} > /dev/null 2>&1")
 end
 
 def map
