@@ -1,6 +1,7 @@
 #!/usr/local/bin/ruby25
 
 require 'time'
+require 'fileutils'
 
 OPTS = {
   dev: '/dev/video0',
