@@ -104,7 +104,7 @@ def map
     dir('photo_*_thumbnail.jpg').sort.reverse
   thumbs[0, 28]
     .each_with_index do |t, i|
-      File.open(to_html_fn(t), 'wb') do |f|
+      File.open(to_html_pa(t), 'wb') do |f|
         pt = i > 0 ? thumbs[i - 1] : nil
         nt = thumbs[i + 1]
         prv =
