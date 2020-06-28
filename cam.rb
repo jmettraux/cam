@@ -7,7 +7,7 @@ OPTS = {
   dev: '/dev/video0',
   res: '1280x720', tres: '320x240',
   path: '.', old: 2 * 24 * 3600,
-  depth: 4 * 3600,
+  depth: 2 * 3600,
   sleep: 5 }
 
 as = ARGV.dup
@@ -43,13 +43,20 @@ def to_photo_pa(path); fjoin(to_photo_fn(path)); end
 
 def shoot
 
-  tsformat = '%Y-%m-%d %H:%M:%S (%Z)'
+  fmt = '%Y-%m-%d %H:%M:%S (%Z)'.inspect
 
   t = Time.now.strftime('%Y%m%d_%H%M%S')
   pfn = fjoin("photo_#{t}.jpg")
   tfn = fjoin("photo_#{t}_thumbnail.jpg")
-  system("fswebcam -d #{OPTS[:dev]} -r #{OPTS[:tres]} --timestamp #{tsformat.inspect} #{tfn} > /dev/null 2>&1")
-  system("fswebcam -d #{OPTS[:dev]} -r #{OPTS[:res]} --timestamp #{tsformat.inspect} #{pfn} > /dev/null 2>&1")
+
+  #mute = ''
+  mute = ' > /dev/null 2>&1'
+
+  system(
+    "fswebcam -d #{OPTS[:dev]} --timestamp #{fmt} " +
+      "-r #{OPTS[:res]} #{pfn} " +
+      "--scale #{OPTS[:tres]} #{tfn} " +
+      mute)
 end
 
 def clean
