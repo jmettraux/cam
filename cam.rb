@@ -6,9 +6,9 @@ require 'fileutils'
 OPTS = {
   dev: '/dev/video0',
   res: '1280x720', tres: '320x240',
-  path: '.', old: 2 * 24 * 3600,
+  path: '.', keep: 1,
   depth: 2 * 3600,
-  sleep: 5 }
+  sleep: 7 }
 
 as = ARGV.dup
 while a = as.shift
@@ -17,7 +17,7 @@ while a = as.shift
   when '-r', '--res' then OPTS[:res] = as.shift
   when '-t', '--tres' then OPTS[:tres] = as.shift
   when '-p', '--path' then OPTS[:path] = as.shift
-  when '-o', '--old' then OPTS[:old] = as.shift.to_i
+  when '-k', '--keep-days' then OPTS[:keep] = as.shift.to_i
   when '-s', '--sleep' then OPTS[:sleep] = as.shift.to_i
   when '-i', '--index-depth' then OPTS[:depth] = as.shift.to_i
   end
@@ -61,13 +61,20 @@ end
 
 def clean
 
-  t = Time.now
+  i = OPTS[:keep]
+  max = 2 * 31
 
-  dir('photo_*.jpg')
-    .each { |pa|
-      pt = pa.match(/\/photo_(\d+_\d+)(_thumbnail)?.jpg$/)
-      pt = Time.parse(pt[1])
-      FileUtils.rm(pa, force: true) if (t - pt) > OPTS[:old] }
+  loop do
+
+    break if i > max
+
+    t = (Time.now - i * 24 * 3600).strftime('%Y%m%d')
+    paths = dir("photo_#{t}_*.{html,jpg}")
+
+    FileUtils.rm(paths, force: true)
+
+    i = i + 1
+  end
 end
 
 def index
